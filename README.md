@@ -103,7 +103,7 @@ pytest tests/ -v
 |---|---|---|
 | `GOOGLE_GENAI_USE_VERTEXAI` | ✅ | `1` に設定すると ADK が Vertex AI バックエンドを使用 |
 | `GOOGLE_CLOUD_PROJECT` | ✅ | GCP プロジェクト ID |
-| `VERTEX_AI_LOCATION` | ✅ | Vertex AI リージョン（例: `us-central1`） |
+| `GOOGLE_CLOUD_LOCATION` | ✅ | Vertex AI リージョン（例: `us-central1`） |
 | `GEMINI_MODEL` | — | 使用する Gemini モデル（デフォルト: `gemini-2.5-flash`） |
 | `GCS_BUCKET` | — | デモアプリのソースコードを格納した GCS バケット名。未設定時はコード文脈なしで動作 |
 | `PORT` | — | サーバーポート（デフォルト: Cloud Run では自動設定） |
@@ -163,8 +163,8 @@ export IMAGE=us-central1-docker.pkg.dev/${PROJECT_ID}/rtg-coding-agent/rtg-codin
 # Artifact Registry へ認証
 gcloud auth configure-docker us-central1-docker.pkg.dev
 
-# ビルド & プッシュ
-docker build -t ${IMAGE} .
+# ビルド & プッシュ（Mac Apple Silicon は --platform linux/amd64 が必要）
+docker build --platform linux/amd64 -t ${IMAGE} .
 docker push ${IMAGE}
 ```
 
@@ -197,7 +197,7 @@ gcloud run deploy rtg-coding-agent \
   --region=us-central1 \
   --platform=managed \
   --service-account=${SA_EMAIL} \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=1,GOOGLE_CLOUD_PROJECT=<PROJECT_ID>,VERTEX_AI_LOCATION=us-central1,GEMINI_MODEL=gemini-2.0-flash,GCS_BUCKET=<GCS_BUCKET>" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=1,GOOGLE_CLOUD_PROJECT=<PROJECT_ID>,GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,GCS_BUCKET=<GCS_BUCKET>" \
   --allow-unauthenticated \
   --project=<PROJECT_ID>
 ```
