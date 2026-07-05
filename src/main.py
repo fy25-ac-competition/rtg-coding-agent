@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from src.routers.generate import router as generate_router
+from src.routers.a2a import router as a2a_router
 
 app = FastAPI(
     title="RTG Coding Agent",
-    description="GCS に保存されたソースコードを Vertex AI で分析し実装計画を生成するエージェント",
-    version="0.5.0",
+    description="逆チューリングゲートからの A2A JSON-RPC 2.0 リクエストを処理し、Vertex AI で回答を生成するコーディングエージェント",
+    version="1.0.0",
 )
 
-app.include_router(generate_router)
+app.include_router(a2a_router)

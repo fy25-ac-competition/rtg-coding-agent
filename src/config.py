@@ -9,4 +9,3 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 
 GCS_BUCKET = os.getenv("GCS_BUCKET", "")
-FIRESTORE_DATABASE = os.getenv("FIRESTORE_DATABASE", "(default)")

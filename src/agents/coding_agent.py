@@ -1,83 +1,68 @@
 """
-N-01b 相当: ソースコードを分析して実装計画を生成する ADK LlmAgent。
+RTG コーディングエージェント (A2A 対応版)。
 
-Vertex AI バックエンド: 環境変数 GOOGLE_GENAI_USE_VERTEXAI=1 で自動有効化。
-output_schema により ADK が Gemini Structured Outputs を自動設定し、型安全な応答を保証する。
+RTG 本体から受け取った質問テキストを Vertex AI (Gemini) に投げ、
+テキスト回答を返す。output_schema は使用しない（プレーンテキスト応答が必要なため）。
+回答は run_async イベントのテキストパーツを収集して組み立てる。
 """
+import asyncio
+
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from src.config import GEMINI_MODEL
-from src.schemas.plan import FileChange, GenerationResult
 
 _APP_NAME = "rtg-coding-agent"
-_OUTPUT_KEY = "result"
+_LOCAL_TIMEOUT = 60.0
 
 _session_svc = InMemorySessionService()
 
-agent = LlmAgent(
+_agent = LlmAgent(
     name="coding_agent",
     model=GEMINI_MODEL,
-    description="ソースコードを分析し、変更要求に対する実装計画を生成するコーディングエージェント",
+    description="RTG の指示に従い spec 作成・コマンド生成・影響調査等を行うコーディングエージェント",
     instruction=(
-        "あなたはシニアソフトウェアエンジニアです。\n"
-        "対象コードベースのファイル内容と、ユーザーの変更要求を受け取り、"
-        "実装に必要なファイル変更とコマンドを生成してください。\n\n"
-        "## file_changes\n"
-        "- path: コードベース内の相対ファイルパス\n"
-        "- description: 変更内容の説明\n"
-        "- content: 変更後のファイル全体の内容（新規・小規模変更の場合）\n"
-        "- diff: unified diff 形式（既存ファイルへの部分変更で content が大きくなる場合）\n"
-        "content と diff はどちらか一方のみ設定すること。\n\n"
-        "## commands\n"
-        "実行順に記載すること（マイグレーション → テスト → ビルド の順が基本）。\n\n"
-        "## explanation\n"
-        "実装方針を 1〜3 文で簡潔に説明すること。\n\n"
-        "コードベースが提供されない場合は、変更要求の内容から一般的な実装計画を立案すること。"
+        "あなたはシニアソフトウェアエンジニアです。"
+        "受け取った指示の種別に応じた回答をテキストのみで返してください。\n\n"
+        "## 回答スタイル（指示種別ごと）\n"
+        "- spec 作成・更新: Markdown 形式。"
+        "## 実現方針 / ## 変更範囲 / ## 手順 の3セクション構成を推奨。\n"
+        "- コマンドリスト生成: 1行1コマンド・コマンドのみ（説明・番号・コードフェンス不要）。\n"
+        "- 影響調査: 影響範囲・関連コード名・変更箇所を含めた簡潔な日本語報告文。\n"
+        "- 模擬実行結果: 実際のシステムには変更を加えない前提で結果を日本語で報告。\n"
+        "- 拒否通知: 「了解しました。実行しません。」等の簡潔な確認文。\n"
+        "- ユースケース候補: 「〜したい」形式で1行1件、2〜3件列挙。\n"
+        "コードブロック（```）で全体を囲まないこと。"
     ),
-    output_schema=GenerationResult,
-    output_key=_OUTPUT_KEY,
 )
 
-_runner = Runner(agent=agent, session_service=_session_svc, app_name=_APP_NAME)
+_runner = Runner(agent=_agent, session_service=_session_svc, app_name=_APP_NAME)
 
 
-async def generate(
-    input_text: str,
-    code_context: str = "",
-    target_source: str = "",
-) -> GenerationResult:
-    """ソースコード文脈と変更要求から GenerationResult を生成して返す。"""
+async def run_query(question: str) -> str:
+    """LLM に質問を投げてテキスト回答を返す。タイムアウト時は ValueError を送出。"""
     session = await _session_svc.create_session(app_name=_APP_NAME, user_id="system")
+    message = types.Content(role="user", parts=[types.Part(text=question)])
 
-    context_section = (
-        f"\n\n## 対象コードベース（{target_source}）\n\n{code_context[:30_000]}"
-        if code_context
-        else ""
-    )
+    collected: list[str] = []
 
-    message = types.Content(
-        role="user",
-        parts=[types.Part(text=(
-            f"## 変更要求\n{input_text}"
-            f"{context_section}"
-        ))],
-    )
+    try:
+        async with asyncio.timeout(_LOCAL_TIMEOUT):
+            async for event in _runner.run_async(
+                user_id="system",
+                session_id=session.id,
+                new_message=message,
+            ):
+                if event.content and event.content.parts:
+                    for part in event.content.parts:
+                        if getattr(part, "text", None):
+                            collected.append(part.text)
+    except TimeoutError as exc:
+        raise ValueError(f"エージェントがタイムアウトしました（{_LOCAL_TIMEOUT}秒）") from exc
 
-    async for _ in _runner.run_async(
-        user_id="system",
-        session_id=session.id,
-        new_message=message,
-    ):
-        pass
+    if not collected:
+        raise ValueError("エージェントからの応答が空でした")
 
-    updated = await _session_svc.get_session(
-        app_name=_APP_NAME, user_id="system", session_id=session.id
-    )
-    result_dict = updated.state.get(_OUTPUT_KEY)
-    if not result_dict:
-        raise ValueError("coding_agent からの応答が空でした")
-
-    return GenerationResult.model_validate(result_dict)
+    return "".join(collected)
