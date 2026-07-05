@@ -104,7 +104,7 @@ pytest tests/ -v
 | `GOOGLE_GENAI_USE_VERTEXAI` | ✅ | `1` に設定すると ADK が Vertex AI バックエンドを使用 |
 | `GOOGLE_CLOUD_PROJECT` | ✅ | GCP プロジェクト ID |
 | `VERTEX_AI_LOCATION` | ✅ | Vertex AI リージョン（例: `us-central1`） |
-| `GEMINI_MODEL` | — | 使用する Gemini モデル（デフォルト: `gemini-2.0-flash`） |
+| `GEMINI_MODEL` | — | 使用する Gemini モデル（デフォルト: `gemini-2.5-flash`） |
 | `GCS_BUCKET` | — | デモアプリのソースコードを格納した GCS バケット名。未設定時はコード文脈なしで動作 |
 | `PORT` | — | サーバーポート（デフォルト: Cloud Run では自動設定） |
 
