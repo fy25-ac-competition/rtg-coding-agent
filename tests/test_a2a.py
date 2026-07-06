@@ -9,9 +9,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 # google.* 未インストール環境でも import を通せるよう事前スタブ
+# "google.adk.tools" は src/agents/tools.py の ToolContext import に必要なため追加。
 for _mod in (
     "google", "google.adk", "google.adk.agents", "google.adk.runners",
-    "google.adk.sessions", "google.genai", "google.genai.types",
+    "google.adk.sessions", "google.adk.tools", "google.genai", "google.genai.types",
     "google.cloud", "google.cloud.storage",
 ):
     sys.modules.setdefault(_mod, MagicMock())
@@ -42,8 +43,7 @@ _BASE_MSG = {
 # ---------------------------------------------------------------------------
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="# spec\n\n## 実現方針\nクーポン機能を追加する。")
-@patch("src.routers.a2a.load_project_context_for_source", return_value="")
-def test_a2a_spec_creation(mock_gcs, mock_run):
+def test_a2a_spec_creation(mock_run):
     """spec 作成リクエストが A2A 形式で正しく処理される。"""
     resp = client.post("/", json=_BASE_MSG)
 
@@ -57,8 +57,7 @@ def test_a2a_spec_creation(mock_gcs, mock_run):
 
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="git checkout -b feature/coupon\nvim cart.html")
-@patch("src.routers.a2a.load_project_context_for_source", return_value="")
-def test_a2a_command_list(mock_gcs, mock_run):
+def test_a2a_command_list(mock_run):
     """コマンドリスト生成リクエストが処理される。"""
     msg = dict(_BASE_MSG)
     msg["params"] = {
@@ -74,10 +73,12 @@ def test_a2a_command_list(mock_gcs, mock_run):
     assert "git checkout" in text
 
 
-@patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="spec text with target context")
-@patch("src.routers.a2a.load_project_context_for_source", return_value="### index.html\n```\n<html>...</html>\n```")
-def test_a2a_with_target_source_metadata(mock_gcs, mock_run):
-    """metadata.target_source が渡された場合、GCS コード文脈を付加して呼ぶ。"""
+@patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="spec text with project context")
+def test_a2a_with_target_source_metadata(mock_run):
+    """
+    metadata.target_source が渡された場合、target_source から project_id を
+    解決し run_query(question, project_id=...) を呼ぶ（GCS 探索はツール側が担う）。
+    """
     msg = {
         "jsonrpc": "2.0",
         "id": 1,
@@ -93,16 +94,13 @@ def test_a2a_with_target_source_metadata(mock_gcs, mock_run):
     resp = client.post("/", json=msg)
 
     assert resp.status_code == 200
-    mock_gcs.assert_called_once_with("demo:system-m")
-    # GCS 文脈が question に付加されていることをエージェント呼び出し引数で確認
-    call_arg = mock_run.call_args.args[0]
-    assert "対象アプリ（demo:system-m）のコード文脈" in call_arg
-    assert "index.html" in call_arg
+    mock_run.assert_called_once()
+    assert mock_run.call_args.args[0].startswith("以下の要望を実現する")
+    assert mock_run.call_args.kwargs.get("project_id") == "system-m"
 
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="了解しました。実行しません。")
-@patch("src.routers.a2a.load_project_context_for_source", return_value="")
-def test_a2a_notify_rejection(mock_gcs, mock_run):
+def test_a2a_notify_rejection(mock_run):
     """拒否通知リクエストが処理される。"""
     msg = dict(_BASE_MSG)
     msg["params"] = {
@@ -116,9 +114,8 @@ def test_a2a_notify_rejection(mock_gcs, mock_run):
 
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="候補1\n候補2\n候補3")
-@patch("src.routers.a2a.load_project_context_for_source", return_value="")
-def test_a2a_suggest_usecases(mock_gcs, mock_run):
-    """ユースケース候補生成リクエストが処理される。"""
+def test_a2a_suggest_usecases(mock_run):
+    """ユースケース候補生成リクエストが処理される。target_source があれば project_id が渡る。"""
     msg = dict(_BASE_MSG)
     msg["params"] = {
         "message": {
@@ -131,6 +128,25 @@ def test_a2a_suggest_usecases(mock_gcs, mock_run):
     assert resp.status_code == 200
     text = resp.json()["result"]["artifacts"][0]["parts"][0]["text"]
     assert "候補1" in text
+    assert mock_run.call_args.kwargs.get("project_id") == "system-m"
+
+
+def test_a2a_no_target_source_means_no_project_id():
+    """metadata が無い/target_source が無い場合、project_id=None で run_query が呼ばれる。"""
+    with patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="ok") as mock_run:
+        resp = client.post("/", json=_BASE_MSG)
+        assert resp.status_code == 200
+        assert mock_run.call_args.kwargs.get("project_id") is None
+
+
+def test_a2a_non_demo_target_source_means_no_project_id():
+    """target_source が demo: 以外（例: github:）の場合、project_id=None になる。"""
+    msg = dict(_BASE_MSG)
+    msg["params"]["message"]["metadata"] = {"target_source": "github:https://example.com/repo"}
+    with patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="ok") as mock_run:
+        resp = client.post("/", json=msg)
+        assert resp.status_code == 200
+        assert mock_run.call_args.kwargs.get("project_id") is None
 
 
 # ---------------------------------------------------------------------------
@@ -159,8 +175,7 @@ def test_a2a_empty_parts():
 
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, side_effect=ValueError("タイムアウト"))
-@patch("src.routers.a2a.load_project_context_for_source", return_value="")
-def test_a2a_agent_timeout(mock_gcs, mock_run):
+def test_a2a_agent_timeout(mock_run):
     """エージェントが ValueError を投げた場合 500 を返す。"""
     resp = client.post("/", json=_BASE_MSG)
     assert resp.status_code == 500
@@ -168,8 +183,7 @@ def test_a2a_agent_timeout(mock_gcs, mock_run):
 
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, side_effect=Exception("LLM 障害"))
-@patch("src.routers.a2a.load_project_context_for_source", return_value="")
-def test_a2a_agent_unexpected_error(mock_gcs, mock_run):
+def test_a2a_agent_unexpected_error(mock_run):
     """エージェントが予期せぬ例外を投げた場合 502 を返す。"""
     resp = client.post("/", json=_BASE_MSG)
     assert resp.status_code == 502
