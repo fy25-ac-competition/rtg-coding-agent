@@ -1,0 +1,180 @@
+{
+  "skill_name": "auto-pytest-reporter",
+  "evals": [
+    {
+      "id": 0,
+      "name": "eval-success",
+      "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「target_calc.py の add/multiply/divide 関数が仕様通りに動作することを確認するテスト。すべてのテストがPASSすることを期待する。」\ntest_target: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py\nreport_dir: .claude/skills/auto-pytest-reporter/evals/workspace/iteration-1/eval-success/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。",
+      "expected_output": "SUCCESS ステータスのレポートが outputs/ に生成される。GitHub Issue は作成されない。レポートにリトライ回数が 0/5 と記録される。",
+      "files": [
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/target_calc.py"
+      ],
+      "assertions": [
+        {
+          "id": "success_report_exists",
+          "description": "outputs/ に TestReport_*.md が生成されていること"
+        },
+        {
+          "id": "success_status",
+          "description": "レポート内に「SUCCESS」という文字列が含まれること"
+        },
+        {
+          "id": "no_issue_created",
+          "description": "outputs/ 内に issue_draft_*.md や GitHub Issue URL への言及がないこと"
+        },
+        {
+          "id": "zero_retry",
+          "description": "レポートのリトライ回数が 0 / 5 であること"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "eval-self-heal",
+      "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「target_calc.py の add/multiply/divide 関数が仕様通りに動作することを確認するテスト。すべてのテストがPASSすることを期待する。2+3=5、10/2=5.0 が正しい結果。」\ntest_target: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_broken_assertion.py\nreport_dir: .claude/skills/auto-pytest-reporter/evals/workspace/iteration-1/eval-self-heal/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\nなお、このテストファイルにはテストコード側の誤り（誤アサーション）が含まれています。テストコードのみ修正して最終的に PASS させてください。",
+      "expected_output": "テストコードの誤アサーション（99 → 5、9.9 → 5.0）を修正してリトライし、最終的に SUCCESS レポートが生成される。修正履歴がレポートに記録される。アプリ本体（target_calc.py）は変更されない。",
+      "files": [
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_broken_assertion.py",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/target_calc.py"
+      ],
+      "assertions": [
+        {
+          "id": "self_heal_report_exists",
+          "description": "outputs/ に TestReport_*.md が生成されていること"
+        },
+        {
+          "id": "self_heal_status_success",
+          "description": "最終的に SUCCESS ステータスになること"
+        },
+        {
+          "id": "retry_logged",
+          "description": "レポートにリトライ履歴または修正内容が記録されていること（リトライ回数が 1 以上）"
+        },
+        {
+          "id": "target_calc_unchanged",
+          "description": "target_calc.py の内容が変更されていないこと（add/multiply/divide の実装が元のまま）"
+        },
+        {
+          "id": "no_issue_on_self_heal",
+          "description": "テストコード修正で SUCCESS になったため GitHub Issue は作成されていないこと"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "eval-app-bug",
+      "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「target_buggy_service.py の discount() と apply_tax() 関数が仕様通りに動作することを確認するテスト。1000円を10%引きにすると900円、1000円に消費税10%を加えると1100円になるべき。」\ntest_target: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_buggy_service.py\nreport_dir: .claude/skills/auto-pytest-reporter/evals/workspace/iteration-1/eval-app-bug/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\nこのテストはテストコード（test_buggy_service.py）は正しく書かれていますが、アプリ側（target_buggy_service.py）にバグがあります。テストコードをいくら修正しても PASS しないため、アプリ側バグとして扱ってください。Issue の内容を生成・提示してください（実際の gh 起票は今回は不要）。",
+      "expected_output": "FAILED ステータスのレポートが生成される。Issue ドラフト（Markdown）が outputs/ に生成される。target_buggy_service.py は変更されていない。Issue 内容にはエラー概要・再現手順・AI原因分析が含まれる。",
+      "files": [
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_buggy_service.py",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/target_buggy_service.py"
+      ],
+      "assertions": [
+        {
+          "id": "app_bug_report_exists",
+          "description": "outputs/ に TestReport_*.md が生成されていること"
+        },
+        {
+          "id": "app_bug_status_failed",
+          "description": "レポートに「FAILED」ステータスが含まれること"
+        },
+        {
+          "id": "issue_draft_exists",
+          "description": "outputs/ に issue_draft_*.md または Issue 内容を提示したファイルが存在すること"
+        },
+        {
+          "id": "issue_title_format",
+          "description": "Issue タイトルが [Auto-Bug] プレフィックスで始まること"
+        },
+        {
+          "id": "app_unchanged",
+          "description": "target_buggy_service.py が変更されていないこと（discount/apply_tax にバグが残っている）"
+        },
+        {
+          "id": "ai_investigation_notes",
+          "description": "Issue またはレポートに AI 原因分析（推定根本原因）が記載されていること"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "eval-file-instruction",
+      "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_plan.md\ntest_target: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py\nreport_dir: .claude/skills/auto-pytest-reporter/evals/workspace/iteration-2/eval-file-instruction/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\n※ test_instruction にはファイルパスが渡されています。ファイルを読み込んで instruction として使用してください。",
+      "expected_output": "test_plan.md をファイルとして読み込み、その全内容を instruction として使用する。テストは PASS し SUCCESS レポートが生成される。レポートに test_plan.md の内容を参照したことが示される。",
+      "files": [
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_plan.md",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/target_calc.py"
+      ],
+      "assertions": [
+        {
+          "id": "file_instruction_report_exists",
+          "description": "outputs/ に TestReport_*.md が生成されていること"
+        },
+        {
+          "id": "file_instruction_success",
+          "description": "レポートに SUCCESS ステータスが含まれること"
+        },
+        {
+          "id": "file_read_acknowledged",
+          "description": "レポートまたは処理ログに test_plan.md を読み込んだ旨の記述があること"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "eval-file-section",
+      "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「.claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_plan.md」記載のテスト1-Aを実施して。\ntest_target: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py\nreport_dir: .claude/skills/auto-pytest-reporter/evals/workspace/iteration-2/eval-file-section/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\n※ test_instruction にはファイル＋セクション指定が含まれています。ファイルを読み込み「テスト1-A」セクションのみを抽出して instruction として使用してください。",
+      "expected_output": "test_plan.md からテスト1-Aセクションのみを抽出し instruction として使用する（テスト1-B・テスト2-Aの内容は含まれない）。テストは PASS し SUCCESS レポートが生成される。レポートに「テスト1-A」セクションを抽出した旨が示される。",
+      "files": [
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_plan.md",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/target_calc.py"
+      ],
+      "assertions": [
+        {
+          "id": "file_section_report_exists",
+          "description": "outputs/ に TestReport_*.md が生成されていること"
+        },
+        {
+          "id": "file_section_success",
+          "description": "レポートに SUCCESS ステータスが含まれること"
+        },
+        {
+          "id": "section_extracted",
+          "description": "レポートのテスト目的にテスト1-Aの内容（add/multiply/divide、2+3=5 等）が反映されていること"
+        },
+        {
+          "id": "other_sections_excluded",
+          "description": "レポートのテスト目的にテスト1-B（ゼロ除算）やテスト2-A（discount/apply_tax）の記述が混入していないこと"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "eval-section-notfound",
+      "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「.claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_plan.md」記載のテスト9-Zを実施して。\ntest_target: .claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py\nreport_dir: .claude/skills/auto-pytest-reporter/evals/workspace/iteration-2/eval-section-notfound/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\n※ test_instruction には存在しないセクション（テスト9-Z）の指定が含まれています。セクションが見つからない旨をレポートに記載し、ファイル全体を instruction として使用してテストを実行してください（ユーザー確認は省略し、フォールバックで進んでください）。",
+      "expected_output": "テスト9-Zセクションが見つからない旨をレポートに記録し、test_plan.md の全内容をフォールバック instruction として使用する。テストは PASS し SUCCESS レポートが生成される。レポートにセクション未発見のフォールバックを実施した旨が記録される。",
+      "files": [
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_plan.md",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/test_calc_success.py",
+        ".claude/skills/auto-pytest-reporter/evals/workspace/fixtures/target_calc.py"
+      ],
+      "assertions": [
+        {
+          "id": "notfound_report_exists",
+          "description": "outputs/ に TestReport_*.md が生成されていること"
+        },
+        {
+          "id": "notfound_section_mentioned",
+          "description": "レポートに「テスト9-Z」または「セクションが見つかりません」という旨の記述があること"
+        },
+        {
+          "id": "notfound_fallback_executed",
+          "description": "セクション未発見でもテストが実行され、何らかのステータス（SUCCESS/FAILED）が記録されていること"
+        }
+      ]
+    }
+  ]
+}

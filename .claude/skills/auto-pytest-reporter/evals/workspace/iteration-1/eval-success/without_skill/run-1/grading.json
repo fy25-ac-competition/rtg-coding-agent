@@ -1,0 +1,39 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": true,
+      "evidence": "TestReport_20260621_calc_success.md が without_skill/outputs/ に存在する"
+    },
+    {
+      "text": "レポート内に「SUCCESS」という文字列が含まれること",
+      "passed": true,
+      "evidence": "レポートの「成功/失敗ステータス: **SUCCESS**」に明記"
+    },
+    {
+      "text": "outputs/ 内に issue_draft_*.md や GitHub Issue URL への言及がないこと",
+      "passed": true,
+      "evidence": "outputs/ に issue_draft_*.md は存在しない"
+    },
+    {
+      "text": "レポートのリトライ回数が 0 / 5 であること",
+      "passed": false,
+      "evidence": "スキルなしのレポートにはリトライ回数の記載がない。ステータスと簡易ログのみ"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "timing": {
+    "executor_duration_seconds": 19.0,
+    "note": "subagent 権限エラーのため本評価はメインセッションで代行実行"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "baseline がリトライ回数を記録しないのは仕様通り（スキルなしのため）。差分が明確に出ており eval として機能している。"
+  }
+}

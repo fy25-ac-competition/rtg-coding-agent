@@ -1,0 +1,10 @@
+{
+  "eval_id": 5,
+  "eval_name": "eval-section-notfound",
+  "prompt": "test_instruction が存在しないセクション（テスト9-Z）指定→フォールバックで全体を使用するケース",
+  "assertions": [
+    {"id": "notfound_report_exists", "text": "outputs/ に TestReport_*.md が生成されていること", "passed": null, "evidence": ""},
+    {"id": "notfound_section_mentioned", "text": "レポートに「テスト9-Z」または「セクションが見つかりません」という旨の記述があること", "passed": null, "evidence": ""},
+    {"id": "notfound_fallback_executed", "text": "セクション未発見でもテストが実行され、何らかのステータス（SUCCESS/FAILED）が記録されていること", "passed": null, "evidence": ""}
+  ]
+}

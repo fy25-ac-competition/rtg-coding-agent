@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "eval-file-section",
+  "prompt": "test_instruction がファイル＋セクション指定（test_plan.md のテスト1-Aセクションのみ抽出）",
+  "assertions": [
+    {"id": "file_section_report_exists", "text": "outputs/ に TestReport_*.md が生成されていること", "passed": null, "evidence": ""},
+    {"id": "file_section_success", "text": "レポートに SUCCESS ステータスが含まれること", "passed": null, "evidence": ""},
+    {"id": "section_extracted", "text": "レポートのテスト目的にテスト1-Aの内容（add/multiply/divide、2+3=5 等）が反映されていること", "passed": null, "evidence": ""},
+    {"id": "other_sections_excluded", "text": "レポートのテスト目的にテスト1-B（ゼロ除算）やテスト2-A（discount/apply_tax）の記述が混入していないこと", "passed": null, "evidence": ""}
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-app-bug",
+  "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「target_buggy_service.py の discount() と apply_tax() 関数が仕様通りに動作することを確認するテスト。1000円を10%引きにすると900円、1000円に消費税10%を加えると1100円になるべき。」\ntest_target: .claude/skills/open-github-issue-workspace/fixtures/test_buggy_service.py\nreport_dir: .claude/skills/open-github-issue-workspace/iteration-1/eval-app-bug/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\nこのテストはテストコード（test_buggy_service.py）は正しく書かれていますが、アプリ側（target_buggy_service.py）にバグがあります。テストコードをいくら修正しても PASS しないため、アプリ側バグとして扱ってください。Issue の内容を生成・提示してください（実際の gh 起票は今回は不要）。",
+  "assertions": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "レポートに「FAILED」ステータスが含まれること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "outputs/ に issue_draft_*.md または Issue 内容を提示したファイルが存在すること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "Issue タイトルが [Auto-Bug] プレフィックスで始まること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "target_buggy_service.py が変更されていないこと（discount/apply_tax にバグが残っている）",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "Issue またはレポートに AI 原因分析（推定根本原因）が記載されていること",
+      "passed": null,
+      "evidence": null
+    }
+  ]
+}

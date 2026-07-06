@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": true,
+      "evidence": "TestReport_20260621_buggy_service.md が without_skill/outputs/ に存在する"
+    },
+    {
+      "text": "レポートに「FAILED」ステータスが含まれること",
+      "passed": true,
+      "evidence": "レポートに「**FAILED** — 2 failed, 1 passed」と明記"
+    },
+    {
+      "text": "outputs/ に issue_draft_*.md または Issue 内容を提示したファイルが存在すること",
+      "passed": false,
+      "evidence": "outputs/ に issue_draft_*.md は存在しない。スキルなしのため Issue 化フローが実行されなかった"
+    },
+    {
+      "text": "Issue タイトルが [Auto-Bug] プレフィックスで始まること",
+      "passed": false,
+      "evidence": "Issue は生成されていない"
+    },
+    {
+      "text": "target_buggy_service.py が変更されていないこと（discount/apply_tax にバグが残っている）",
+      "passed": true,
+      "evidence": "baseline はファイル修正を行わなかったため、target_buggy_service.py は変更なし"
+    },
+    {
+      "text": "Issue またはレポートに AI 原因分析（推定根本原因）が記載されていること",
+      "passed": true,
+      "evidence": "レポートの「失敗原因の分析」セクションに符号バグの説明が記載されている"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.67
+  },
+  "timing": {
+    "executor_duration_seconds": 56.1,
+    "note": "subagent 権限エラーのため本評価はメインセッションで代行実行"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "スキルあり（6/6）とスキルなし（4/6）の差分は Issue 生成フロー（ドラフト・タイトル形式）の有無。スキルの価値が明確に測定できている。"
+  }
+}

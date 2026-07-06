@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-success",
+  "prompt": "test_instruction がテキスト直書き・テストが全件 PASS するケース",
+  "assertions": [
+    {"id": "success_report_exists", "text": "outputs/ に TestReport_*.md が生成されていること", "passed": null, "evidence": ""},
+    {"id": "success_status", "text": "レポート内に「SUCCESS」という文字列が含まれること", "passed": null, "evidence": ""},
+    {"id": "no_issue_created", "text": "outputs/ 内に issue_draft_*.md や GitHub Issue URL への言及がないこと", "passed": null, "evidence": ""},
+    {"id": "zero_retry", "text": "レポートのリトライ回数が 0 / 5 であること", "passed": null, "evidence": ""}
+  ]
+}

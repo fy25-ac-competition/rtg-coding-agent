@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-self-heal",
+  "prompt": "test_instruction がテキスト直書き・テストコードに誤アサーションがあり自己修復するケース",
+  "assertions": [
+    {"id": "self_heal_report_exists", "text": "outputs/ に TestReport_*.md が生成されていること", "passed": null, "evidence": ""},
+    {"id": "self_heal_status_success", "text": "最終的に SUCCESS ステータスになること", "passed": null, "evidence": ""},
+    {"id": "retry_logged", "text": "レポートにリトライ履歴または修正内容が記録されていること（リトライ回数が 1 以上）", "passed": null, "evidence": ""},
+    {"id": "target_calc_unchanged", "text": "target_calc.py の内容が変更されていないこと（add/multiply/divide の実装が元のまま）", "passed": null, "evidence": ""},
+    {"id": "no_issue_on_self_heal", "text": "テストコード修正で SUCCESS になったため GitHub Issue は作成されていないこと", "passed": null, "evidence": ""}
+  ]
+}

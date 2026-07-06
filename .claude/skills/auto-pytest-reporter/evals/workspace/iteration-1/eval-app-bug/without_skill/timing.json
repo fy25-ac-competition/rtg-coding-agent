@@ -1,0 +1,6 @@
+{
+  "total_tokens": 24855,
+  "duration_ms": 56140,
+  "total_duration_seconds": 56.1,
+  "note": "Bash/PowerShell + Write 権限が拒否されたためテスト未実行。静的解析でバグ箇所を特定・レポートを会話内に出力するにとどまった。"
+}

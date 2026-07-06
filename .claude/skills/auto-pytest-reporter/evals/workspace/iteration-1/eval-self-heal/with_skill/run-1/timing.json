@@ -1,0 +1,6 @@
+{
+  "total_tokens": 27253,
+  "duration_ms": 32645,
+  "total_duration_seconds": 32.6,
+  "note": "Bash/PowerShell 実行権限が拒否されたため、テスト未実行。権限不足で中断。"
+}

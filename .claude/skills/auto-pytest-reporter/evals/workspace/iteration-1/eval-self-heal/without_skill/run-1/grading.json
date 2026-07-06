@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": true,
+      "evidence": "TestReport_20260621_calc_self_heal.md が without_skill/outputs/ に存在する"
+    },
+    {
+      "text": "最終的に SUCCESS ステータスになること",
+      "passed": false,
+      "evidence": "レポートのステータスは「FAILED」。スキルなしのため自己修復を実施せず、FAILED のまま終了"
+    },
+    {
+      "text": "レポートにリトライ履歴または修正内容が記録されていること（リトライ回数が 1 以上）",
+      "passed": false,
+      "evidence": "「スキルなしのため自己修復は実施せず」と明記。修正履歴なし"
+    },
+    {
+      "text": "target_calc.py の内容が変更されていないこと（add/multiply/divide の実装が元のまま）",
+      "passed": true,
+      "evidence": "baseline はファイル修正を行わなかったため、target_calc.py は変更なし"
+    },
+    {
+      "text": "テストコード修正で SUCCESS になったため GitHub Issue は作成されていないこと",
+      "passed": true,
+      "evidence": "Issue は発行されていない（ただしスキルなしのため Issue 化の判断自体も行われていない）"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "timing": {
+    "executor_duration_seconds": 40.6,
+    "note": "subagent 権限エラーのため本評価はメインセッションで代行実行"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "スキルあり（5/5）とスキルなし（3/5）の差分が明確。自己修復の有無がスコアに直接反映されており discriminating な eval。"
+  }
+}

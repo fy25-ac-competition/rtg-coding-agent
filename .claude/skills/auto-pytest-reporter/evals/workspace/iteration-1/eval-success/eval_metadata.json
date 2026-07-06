@@ -1,0 +1,27 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-success",
+  "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「target_calc.py の add/multiply/divide 関数が仕様通りに動作することを確認するテスト。すべてのテストがPASSすることを期待する。」\ntest_target: .claude/skills/open-github-issue-workspace/fixtures/test_calc_success.py\nreport_dir: .claude/skills/open-github-issue-workspace/iteration-1/eval-success/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。",
+  "assertions": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "レポート内に「SUCCESS」という文字列が含まれること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "outputs/ 内に issue_draft_*.md や GitHub Issue URL への言及がないこと",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "レポートのリトライ回数が 0 / 5 であること",
+      "passed": null,
+      "evidence": null
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "model": "opusplan",
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest*)",
+      "Bash(python*)",
+      "Bash(mkdir*)",
+      "Bash(cd*)",
+      "PowerShell(python*)",
+      "PowerShell(New-Item*)",
+      "PowerShell(python -m pytest*)"
+    ]
+  }
+}

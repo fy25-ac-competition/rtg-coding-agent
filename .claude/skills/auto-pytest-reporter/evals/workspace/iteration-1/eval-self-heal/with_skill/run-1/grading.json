@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": true,
+      "evidence": "TestReport_20260621_test_calc_self_heal.md が with_skill/outputs/ に存在する"
+    },
+    {
+      "text": "最終的に SUCCESS ステータスになること",
+      "passed": true,
+      "evidence": "レポートに「最終ステータス: **SUCCESS**」と明記。修正後の再実行で 5 passed を確認"
+    },
+    {
+      "text": "レポートにリトライ履歴または修正内容が記録されていること（リトライ回数が 1 以上）",
+      "passed": true,
+      "evidence": "「リトライ回数: 1 / 5」および自己修復ログの表（修正内容・修正ファイル）が記載されている"
+    },
+    {
+      "text": "target_calc.py の内容が変更されていないこと（add/multiply/divide の実装が元のまま）",
+      "passed": true,
+      "evidence": "修正したのは test_calc_broken_assertion.py のアサーション2箇所のみ。target_calc.py への変更なし"
+    },
+    {
+      "text": "テストコード修正で SUCCESS になったため GitHub Issue は作成されていないこと",
+      "passed": true,
+      "evidence": "outputs/ に issue_draft_*.md は存在せず。レポートのアクションアイテムも「対応不要」"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 32.6,
+    "note": "subagent 権限エラーのため本評価はメインセッションで代行実行"
+  },
+  "claims": [
+    {
+      "claim": "誤アサーション（99, 9.9）がテストコード側の問題と正しく判定された",
+      "type": "quality",
+      "verified": true,
+      "evidence": "判定根拠セクションに『target_calc.py の実装は正しい』と明記し、修正対象をテストコードに限定"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "test_calc_broken_assertion.py が元のバグ状態（99, 9.9）から修正後の状態（5, 5.0）に変化したことを assertion で確認するとより強固。現状は「リトライ回数 ≥ 1」で間接確認のみ"
+      }
+    ],
+    "overall": "自己修復の核心（テストのみ修正・アプリ未改変・SUCCESS到達・Issue未発行）を5 assertionで過不足なくカバー。"
+  }
+}

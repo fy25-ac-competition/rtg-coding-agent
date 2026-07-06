@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": true,
+      "evidence": "TestReport_20260621_test_calc_success.md が with_skill/outputs/ に存在する"
+    },
+    {
+      "text": "レポート内に「SUCCESS」という文字列が含まれること",
+      "passed": true,
+      "evidence": "レポートの「最終ステータス: **SUCCESS**」セクションに明記"
+    },
+    {
+      "text": "outputs/ 内に issue_draft_*.md や GitHub Issue URL への言及がないこと",
+      "passed": true,
+      "evidence": "outputs/ に issue_draft_*.md は存在せず、レポートのアクションアイテムも「対応不要」"
+    },
+    {
+      "text": "レポートのリトライ回数が 0 / 5 であること",
+      "passed": true,
+      "evidence": "レポートに「リトライ回数: 0 / 5」と明記"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 35.8,
+    "note": "subagent 権限エラーのため本評価はメインセッションで代行実行"
+  },
+  "claims": [
+    {
+      "claim": "テスト実行で 5 passed",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Bash で実際に実行し '5 passed in 0.03s' を確認"
+    },
+    {
+      "claim": "アプリ本体（target_calc.py）は変更されていない",
+      "type": "process",
+      "verified": true,
+      "evidence": "SUCCESS ケースなので修正不要。target_calc.py は読み取りのみで変更なし"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "レポートのリトライ回数が 0 / 5 であること",
+        "reason": "「0/5 という文字列の存在」だけでなく、レポートの自己修復ログセクションが空（リトライなし）であることも確認できるとより強固"
+      }
+    ],
+    "overall": "4 assertions で成功・Issue なし・リトライなしを適切にカバーしている。概ね良好。"
+  }
+}

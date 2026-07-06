@@ -1,0 +1,67 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": true,
+      "evidence": "TestReport_20260621_test_buggy_service.md が with_skill/outputs/ に存在する"
+    },
+    {
+      "text": "レポートに「FAILED」ステータスが含まれること",
+      "passed": true,
+      "evidence": "レポートに「最終ステータス: **FAILED**」と明記"
+    },
+    {
+      "text": "outputs/ に issue_draft_*.md または Issue 内容を提示したファイルが存在すること",
+      "passed": true,
+      "evidence": "issue_draft_20260621.md が with_skill/outputs/ に存在する"
+    },
+    {
+      "text": "Issue タイトルが [Auto-Bug] プレフィックスで始まること",
+      "passed": true,
+      "evidence": "issue_draft_20260621.md の冒頭: 「[Auto-Bug] target_buggy_service: discount/apply_tax の符号バグで価格計算が逆転」"
+    },
+    {
+      "text": "target_buggy_service.py が変更されていないこと（discount/apply_tax にバグが残っている）",
+      "passed": true,
+      "evidence": "スキルの制約通り、アプリ本体（target_buggy_service.py）は修正していない。Issue ドラフトで修正提案のみを記載"
+    },
+    {
+      "text": "Issue またはレポートに AI 原因分析（推定根本原因）が記載されていること",
+      "passed": true,
+      "evidence": "issue_draft に「🤖 AI による原因分析」セクションがあり、13行目・19行目の符号ミスを具体的に指摘"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 87.4,
+    "note": "subagent 権限エラーのため本評価はメインセッションで代行実行"
+  },
+  "claims": [
+    {
+      "claim": "テストコードは正しく書かれており修正不要",
+      "type": "quality",
+      "verified": true,
+      "evidence": "test_buggy_service.py の期待値（900.0, 1100.0）は仕様（割引・税込）と整合しており、アサーションは正しい"
+    },
+    {
+      "claim": "バグ箇所を具体的なファイル・行番号で特定",
+      "type": "factual",
+      "verified": true,
+      "evidence": "issue_draft に target_buggy_service.py の 13行目・19行目を明記"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Issue タイトルが [Auto-Bug] プレフィックスで始まること",
+        "reason": "タイトルの存在だけでなく、モジュール名（target_buggy_service）とエラー概要が含まれているか確認する assertion を追加するとより良い"
+      }
+    ],
+    "overall": "6 assertions で FAILED・Issue生成・タイトル形式・アプリ未改変・AI分析の全要件をカバー。最も discriminating な eval ケース。"
+  }
+}

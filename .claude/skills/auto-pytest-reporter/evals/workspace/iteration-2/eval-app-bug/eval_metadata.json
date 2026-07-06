@@ -1,0 +1,13 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-app-bug",
+  "prompt": "test_instruction がテキスト直書き・アプリ側にバグがあり Issue ドラフトを生成するケース",
+  "assertions": [
+    {"id": "app_bug_report_exists", "text": "outputs/ に TestReport_*.md が生成されていること", "passed": null, "evidence": ""},
+    {"id": "app_bug_status_failed", "text": "レポートに「FAILED」ステータスが含まれること", "passed": null, "evidence": ""},
+    {"id": "issue_draft_exists", "text": "outputs/ に issue_draft_*.md または Issue 内容を提示したファイルが存在すること", "passed": null, "evidence": ""},
+    {"id": "issue_title_format", "text": "Issue タイトルが [Auto-Bug] プレフィックスで始まること", "passed": null, "evidence": ""},
+    {"id": "app_unchanged", "text": "target_buggy_service.py が変更されていないこと（discount/apply_tax にバグが残っている）", "passed": null, "evidence": ""},
+    {"id": "ai_investigation_notes", "text": "Issue またはレポートに AI 原因分析（推定根本原因）が記載されていること", "passed": null, "evidence": ""}
+  ]
+}

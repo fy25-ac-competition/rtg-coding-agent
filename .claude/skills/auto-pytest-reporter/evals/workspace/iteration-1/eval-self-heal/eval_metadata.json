@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-self-heal",
+  "prompt": "以下のテストを実行して結果を報告してください。\n\ntest_instruction: 「target_calc.py の add/multiply/divide 関数が仕様通りに動作することを確認するテスト。すべてのテストがPASSすることを期待する。2+3=5、10/2=5.0 が正しい結果。」\ntest_target: .claude/skills/open-github-issue-workspace/fixtures/test_calc_broken_assertion.py\nreport_dir: .claude/skills/open-github-issue-workspace/iteration-1/eval-self-heal/with_skill/outputs\n\nテスト実行後、結果レポートを上記 report_dir に保存してください。このリポジトリの src/ とは無関係のフィクスチャなので、pytest.ini を使わず `python -m pytest <ファイルパス> -v` で直接実行してください。\nなお、このテストファイルにはテストコード側の誤り（誤アサーション）が含まれています。テストコードのみ修正して最終的に PASS させてください。",
+  "assertions": [
+    {
+      "text": "outputs/ に TestReport_*.md が生成されていること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "最終的に SUCCESS ステータスになること",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "レポートにリトライ履歴または修正内容が記録されていること（リトライ回数が 1 以上）",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "target_calc.py の内容が変更されていないこと（add/multiply/divide の実装が元のまま）",
+      "passed": null,
+      "evidence": null
+    },
+    {
+      "text": "テストコード修正で SUCCESS になったため GitHub Issue は作成されていないこと",
+      "passed": null,
+      "evidence": null
+    }
+  ]
+}
