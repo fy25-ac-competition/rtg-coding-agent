@@ -1,88 +1,112 @@
 """
-Google Cloud Storage からソースコードを読み込む。
+Google Cloud Storage 上のソースコードを探索するためのプリミティブ関数群。
 
 バケット構造:
   gs://<GCS_BUCKET>/<project_id>/<ファイルパス>
+
+以前はここでプロジェクト全体を一括ダンプして LLM プロンプトへ注入していたが、
+ADK LlmAgent 側にツール（list_files / read_file / search_code をラップした
+FunctionTool、src/agents/tools.py 参照）を持たせ、LLM が必要なファイルだけを
+自律的に探索する方式へ移行した。一括ダンプ用の関数は本ファイルから削除済み。
 
 対象アプリ識別子（demo:<name>）から自動的に project_id を解決する:
   demo:system-m  →  gs://<GCS_BUCKET>/system-m/...
   demo:system-s  →  gs://<GCS_BUCKET>/system-s/...
 """
-import logging
+import re
 
 from google.cloud import storage
 from src.config import GCS_BUCKET
-
-logger = logging.getLogger(__name__)
 
 _SKIP_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
     ".pdf", ".zip", ".tar", ".gz", ".whl", ".pyc", ".pyo",
     ".map", ".lock",
 }
-_MAX_FILE_BYTES = 50_000     # 1 ファイルあたり最大 50 KB
-_MAX_TOTAL_BYTES = 300_000   # コード文脈全体の最大 300 KB
+_MAX_FILE_BYTES = 50_000       # 1 ファイルあたり最大 50 KB（read_file / search_code で適用）
+_MAX_TOTAL_BYTES = 300_000     # 未使用（旧一括ダンプ用の定数だが後方互換のため残置）
+_MAX_SEARCH_HITS = 100         # search_code が返すマッチ行の最大件数
 
 
-def load_project_context(project_id: str) -> str:
+def _skip_suffix(relative_path: str) -> bool:
+    """スキップ対象拡張子（バイナリ・生成物）なら True。"""
+    suffix = "." + relative_path.rsplit(".", 1)[-1].lower() if "." in relative_path else ""
+    return suffix in _SKIP_EXTENSIONS
+
+
+def list_files(project_id: str) -> list[str]:
     """
-    GCS の <project_id>/ プレフィックス以下のファイルを読み込み、
-    LLM に渡すコード文脈文字列を組み立てて返す。
+    <project_id>/ プレフィックス配下のファイル相対パス一覧を返す。
+    スキップ拡張子（バイナリ・生成物）は除外する。GCS_BUCKET 未設定時は空リスト。
     """
     if not GCS_BUCKET:
-        return ""
+        return []
 
     client = storage.Client()
     prefix = f"{project_id}/"
-    blobs = sorted(client.list_blobs(GCS_BUCKET, prefix=prefix), key=lambda b: b.name)
-
-    parts: list[str] = []
-    total = 0
-
-    for blob in blobs:
-        relative_path = blob.name[len(prefix):]
-        if not relative_path:
+    result: list[str] = []
+    for blob in sorted(client.list_blobs(GCS_BUCKET, prefix=prefix), key=lambda b: b.name):
+        rel = blob.name[len(prefix):]
+        if not rel or _skip_suffix(rel):
             continue
-
-        suffix = "." + relative_path.rsplit(".", 1)[-1].lower() if "." in relative_path else ""
-        if suffix in _SKIP_EXTENSIONS:
-            continue
-        if blob.size > _MAX_FILE_BYTES or total + blob.size > _MAX_TOTAL_BYTES:
-            continue
-
-        try:
-            content = blob.download_as_text(encoding="utf-8", errors="replace")
-        except Exception:
-            continue
-
-        parts.append(f"### {relative_path}\n```\n{content}\n```")
-        total += blob.size
-
-    return "\n\n".join(parts)
+        result.append(rel)
+    return result
 
 
-def load_project_context_for_source(source: str | None) -> str:
+def read_file(project_id: str, path: str) -> str:
     """
-    target_source 識別子から GCS のコード文脈を読み込む。
-
-    対応形式:
-      demo:<name>   →  gs://<GCS_BUCKET>/<name>/ 以下を読み込む
-      github:<url>  →  GCS への事前アップロードが必要なため現状はスキップ
-      その他 / None →  空文字を返す
+    <project_id>/<path> のファイル内容（UTF-8）を返す。
+    存在しない/サイズ上限超/取得失敗時は、例外を投げず
+    エラー内容を示す文字列を返す（LLM ツール応答として自然に扱えるようにするため）。
     """
-    if not source or not GCS_BUCKET:
-        return ""
+    if not GCS_BUCKET:
+        return "[エラー] GCS_BUCKET が未設定です。"
 
-    if source.startswith("demo:"):
-        project_id = source[len("demo:"):]
-    else:
-        return ""
+    client = storage.Client()
+    blob = client.bucket(GCS_BUCKET).blob(f"{project_id}/{path}")
+    if not blob.exists():
+        return f"[エラー] ファイルが見つかりません: {path}"
+
+    blob.reload()  # list_blobs 経由でないため size 等のメタデータを明示的に取得する
+    if blob.size and blob.size > _MAX_FILE_BYTES:
+        return f"[エラー] ファイルが大きすぎます（{blob.size} bytes > {_MAX_FILE_BYTES}）: {path}"
 
     try:
-        context = load_project_context(project_id)
-        if context:
-            logger.debug("GCS から %s のコード文脈を取得しました", source)
-        return context
-    except Exception as exc:
-        logger.warning("GCS からのコード文脈取得に失敗しました (source=%s): %s", source, exc)
-        return ""
+        return blob.download_as_text(encoding="utf-8", errors="replace")
+    except Exception as exc:  # noqa: BLE001 - 個別ファイルの取得失敗で全体を落とさない
+        return f"[エラー] 読み込みに失敗しました: {path} ({exc})"
+
+
+def search_code(project_id: str, pattern: str) -> list[str]:
+    """
+    <project_id>/ 配下のテキストファイルを正規表現 pattern で横断検索し、
+    マッチ行を "<相対パス>:<行番号>: <行内容>" 形式で返す（最大 _MAX_SEARCH_HITS 件）。
+    バイナリ・サイズ上限超のファイルはスキップする。pattern が不正な正規表現の場合は
+    例外を投げずエラー文字列 1 件のリストを返す。
+    """
+    if not GCS_BUCKET:
+        return ["[エラー] GCS_BUCKET が未設定です。"]
+    try:
+        regex = re.compile(pattern)
+    except re.error as exc:
+        return [f"[エラー] 正規表現が不正です: {exc}"]
+
+    client = storage.Client()
+    prefix = f"{project_id}/"
+    hits: list[str] = []
+    for blob in sorted(client.list_blobs(GCS_BUCKET, prefix=prefix), key=lambda b: b.name):
+        rel = blob.name[len(prefix):]
+        if not rel or _skip_suffix(rel):
+            continue
+        if blob.size and blob.size > _MAX_FILE_BYTES:
+            continue
+        try:
+            text = blob.download_as_text(encoding="utf-8", errors="replace")
+        except Exception:  # noqa: BLE001 - 個別ファイルの取得失敗はスキップして続行
+            continue
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            if regex.search(line):
+                hits.append(f"{rel}:{lineno}: {line.strip()}")
+                if len(hits) >= _MAX_SEARCH_HITS:
+                    return hits
+    return hits
