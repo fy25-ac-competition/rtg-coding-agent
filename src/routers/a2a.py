@@ -10,6 +10,11 @@ Vertex AI (Gemini) の回答を A2A レスポンス形式で返す。
   - params.message.metadata.target_source: 対象アプリ識別子（オプション、debug-20260705 §4）
 
 レスポンス: result.artifacts[0].parts[0].text に回答テキストを格納
+
+target_source（demo:<name>）から project_id を解決し、run_query に渡す。
+以前はここで GCS のコード文脈を一括取得して質問文へ連結していたが、
+ADK LlmAgent 側の探索ツール（src/agents/tools.py）が project_id を使って
+自律的に GCS を探索する方式へ移行したため、質問文への注入は行わない。
 """
 import logging
 
@@ -17,7 +22,6 @@ from fastapi import APIRouter, HTTPException
 
 from src.agents.coding_agent import run_query
 from src.schemas.a2a import A2ARequest, A2AResponse
-from src.services.gcs_client import load_project_context_for_source
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -40,18 +44,16 @@ async def a2a_endpoint(body: A2ARequest) -> A2AResponse:
     if body.params.message.metadata:
         target_source = body.params.message.metadata.get("target_source")
 
-    # GCS からコード文脈を取得して質問に付加する（demo: ソース対応）
-    code_context = load_project_context_for_source(target_source)
-    if code_context:
-        question = (
-            question
-            + f"\n\n## 対象アプリ（{target_source}）のコード文脈\n\n"
-            + code_context
-        )
-        logger.info("target_source=%s のコード文脈を付加しました", target_source)
+    # target_source（demo:<name>）から project_id を解決する。
+    # それ以外の形式（github: 等）・未指定の場合は project_id=None とし、
+    # run_query 側のツールが「対象アプリが指定されていない」旨を返す。
+    project_id: str | None = None
+    if target_source and target_source.startswith("demo:"):
+        project_id = target_source[len("demo:"):]
+        logger.info("target_source=%s を project_id=%s に解決しました", target_source, project_id)
 
     try:
-        answer = await run_query(question)
+        answer = await run_query(question, project_id=project_id)
     except ValueError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:
