@@ -101,7 +101,8 @@ def test_a2a_with_target_source_metadata(mock_run):
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="了解しました。実行しません。")
 def test_a2a_notify_rejection(mock_run):
-    """拒否通知リクエストが処理される。"""
+    """拒否通知リクエストが処理される（調整後は spec 形式のテキストが返る想定。
+    ここでは run_query を mock 化しているため mock 値をそのまま検証するのみ）。"""
     msg = dict(_BASE_MSG)
     msg["params"] = {
         "message": {
@@ -115,7 +116,9 @@ def test_a2a_notify_rejection(mock_run):
 
 @patch("src.routers.a2a.run_query", new_callable=AsyncMock, return_value="候補1\n候補2\n候補3")
 def test_a2a_suggest_usecases(mock_run):
-    """ユースケース候補生成リクエストが処理される。target_source があれば project_id が渡る。"""
+    """ユースケース候補生成リクエストが処理される（調整後は spec 形式のテキストが返る想定。
+    ここでは run_query を mock 化しているため mock 値をそのまま検証するのみ）。
+    target_source があれば project_id が渡る。"""
     msg = dict(_BASE_MSG)
     msg["params"] = {
         "message": {
