@@ -1,0 +1,33 @@
+# `gcloud run deploy --source .` / `gcloud builds submit` 用の除外設定。
+# 未指定時は .gitignore を自動流用するが、明示しておくことで
+# .claude/ や spec/ 等の開発補助ファイルもアップロード対象から除外する。
+
+.gcloudignore
+.git/
+.gitignore
+
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+.env
+.env.example
+.python-version
+
+.claude/
+.steering/
+spec/
+tests/
+docs/
+*.md
+
+.DS_Store
+*.log

@@ -1,0 +1,41 @@
+# Docker イメージに含めないファイル/ディレクトリ
+# Dockerfile は `COPY . .` で全体をコピーするため、これが無いと
+# venv/ や .env（機密情報）までイメージへ焼き込まれてしまう。
+
+# バージョン管理
+.git/
+.gitignore
+
+# 除外設定ファイル自身
+.dockerignore
+.gcloudignore
+
+# Python 仮想環境・キャッシュ
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 機密情報・ローカル設定
+.env
+.env.example
+.python-version
+
+# 開発補助・ドキュメント・スペック類（実行時に不要）
+.claude/
+.steering/
+spec/
+tests/
+docs/
+*.md
+
+# OS・ログ
+.DS_Store
+*.log
